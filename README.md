@@ -20,8 +20,8 @@ To view documentation or get support, visit [docs](https://yuda-lyu.github.io/w-
 npm i w-opencc
 ```
 
-#### Example 2D:
-> **Link:** [[dev source code](https://github.com/yuda-lyu/w-opencc/blob/master/g-2d.mjs)]
+#### Example:
+> **Link:** [[dev source code](https://github.com/yuda-lyu/w-opencc/blob/master/g.mjs)]
 ```alias
 import WOpencc from './src/WOpencc.mjs'
 //import WOpencc from 'w-opencc/src/WOpencc.mjs'

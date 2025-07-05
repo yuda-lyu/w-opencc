@@ -1,10 +1,10 @@
 import path from 'path'
 import fs from 'fs'
 import process from 'process'
-import get from 'lodash-es/get.js'
+// import get from 'lodash-es/get.js'
 import genID from 'wsemi/src/genID.mjs'
 import str2b64 from 'wsemi/src/str2b64.mjs'
-import execScript from 'wsemi/src/execScript.mjs'
+import execProcess from 'wsemi/src/execProcess.mjs'
 import fsIsFile from 'wsemi/src/fsIsFile.mjs'
 import isestr from 'wsemi/src/isestr.mjs'
 import cstr from 'wsemi/src/cstr.mjs'
@@ -13,32 +13,8 @@ import cstr from 'wsemi/src/cstr.mjs'
 let fdSrv = path.resolve()
 
 
-let fnExe = `cvcc.exe`
-
-
 function isWindows() {
     return process.platform === 'win32'
-}
-
-
-function getExecFolder() {
-    let fdExeSrc = `${fdSrv}/src/`
-    let fdExeNM = `${fdSrv}/node_modules/w-opencc/src/`
-
-    if (fsIsFile(`${fdExeSrc}${fnExe}`)) {
-        return fdExeSrc
-    }
-    else if (fsIsFile(`${fdExeNM}${fnExe}`)) {
-        return fdExeNM
-    }
-    else {
-        return { error: 'can not find executable file for opencc' }
-    }
-}
-
-
-function getExecPath(fd) {
-    return `${fd}${fnExe}`
 }
 
 
@@ -81,17 +57,28 @@ async function WOpencc(str, opt = {}) {
         return Promise.reject('str is not a string')
     }
 
+    //fnExe
+    let fnExe = `cvcc.exe`
+
     //fdExe
-    let fdExe = getExecFolder()
+    let fdExe = ''
+    if (true) {
+        let fdExeSrc = `${fdSrv}/src/`
+        let fdExeNM = `${fdSrv}/node_modules/w-opencc/src/`
+        if (fsIsFile(`${fdExeSrc}${fnExe}`)) {
+            fdExe = fdExeSrc
+        }
+        else if (fsIsFile(`${fdExeNM}${fnExe}`)) {
+            fdExe = fdExeNM
+        }
+        else {
+            return Promise.reject('can not find folder for opencc')
+        }
+    }
     // console.log('fdExe', fdExe)
 
-    //check
-    if (get(fdExe, 'error')) {
-        return Promise.reject(fdExe.error)
-    }
-
     //prog
-    let prog = getExecPath(fdExe)
+    let prog = `${fdExe}${fnExe}`
     // console.log('prog', prog)
 
     //id
@@ -125,21 +112,20 @@ async function WOpencc(str, opt = {}) {
     let b64Input = str2b64(cInput)
     // console.log('b64Input', b64Input)
 
-    //execScript
-    await execScript(prog, b64Input)
+    //execProcess
+    await execProcess(prog, b64Input)
         .catch((err) => {
-            console.log('WOpencc execScript catch', err)
-            errTemp = err
+            console.log('execProcess catch', err)
+            errTemp = err.toString()
         })
 
     //read output
-    let j = fs.readFileSync(fpOut, 'utf8')
-    // console.log('j', j)
-
-    //output
-    // let output = j2o(j)
-    let output = j
-    // console.log('output', output)
+    let output = null
+    try {
+        output = fs.readFileSync(fpOut, 'utf8')
+        // console.log('output', output)
+    }
+    catch (err) {}
 
     //unlinkSync
     try {
@@ -154,18 +140,13 @@ async function WOpencc(str, opt = {}) {
     catch (err) {}
 
     //check
-    if (errTemp !== null) {
+    if (errTemp) {
         return Promise.reject(errTemp)
     }
 
     //check
     if (!isestr(output)) {
-        errTemp = `output[${cstr(output)}] is not a string`
-    }
-
-    //check
-    if (errTemp !== null) {
-        return Promise.reject(errTemp)
+        return Promise.reject(`output[${cstr(output)}] is not an effective string`)
     }
 
     return output

@@ -19,4 +19,4 @@ test()
     })
 
 
-//node --experimental-modules g.mjs
+//node g.mjs
